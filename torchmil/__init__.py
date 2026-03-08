@@ -10,6 +10,7 @@ from .nn import (
     MaxPooling,
     MeanPooling,
 )
+from .utils import Trainer, accuracy, auroc, f1, kfold_split_indices, performance
 
 __all__ = [
     "make_bag",
@@ -30,4 +31,10 @@ __all__ = [
     "MaxPooling",
     "AttentionPooling",
     "BagClassifier",
+    "Trainer",
+    "kfold_split_indices",
+    "accuracy",
+    "auroc",
+    "f1",
+    "performance",
 ]
