@@ -1,4 +1,5 @@
 from .attention import GatedAttention
+from .classifier import BagClassifier
 from .graph import GraphConv
 from .pooling import AttentionPooling, MaxPooling, MeanPooling
 from .transformer import MILTransformerEncoder
@@ -10,4 +11,5 @@ __all__ = [
     "MeanPooling",
     "MaxPooling",
     "AttentionPooling",
+    "BagClassifier",
 ]

@@ -49,6 +49,14 @@ class MILTransformerEncoder(nn.Module):
             raise ValueError("attention_mask must have shape [B, N]")
 
         key_padding_mask = ~attention_mask
+
+        # Avoid NaNs for fully-masked bags by unmasking one token for encoder math,
+        # then hard-masking outputs back to 0 afterwards.
+        if key_padding_mask.all(dim=1).any():
+            key_padding_mask = key_padding_mask.clone()
+            all_masked_rows = key_padding_mask.all(dim=1)
+            key_padding_mask[all_masked_rows, 0] = False
+
         encoded = self.encoder(instances, src_key_padding_mask=key_padding_mask)
-        encoded = encoded * attention_mask.unsqueeze(-1).to(encoded.dtype)
+        encoded = encoded.masked_fill(~attention_mask.unsqueeze(-1), 0.0)
         return encoded

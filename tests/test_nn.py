@@ -2,6 +2,7 @@ import torch
 
 from torchmil.nn import (
     AttentionPooling,
+    BagClassifier,
     GatedAttention,
     GraphConv,
     MILTransformerEncoder,
@@ -164,3 +165,25 @@ def test_attention_pooling_shapes_and_masking():
     assert torch.allclose(weights_a[~mask], torch.zeros_like(weights_a[~mask]))
     assert torch.allclose(weights_b[~mask], torch.zeros_like(weights_b[~mask]))
     assert torch.allclose(bag_a, bag_b, atol=1e-6)
+
+
+def test_transformer_all_fully_masked_rows_do_not_nan():
+    module = MILTransformerEncoder(in_dim=8, num_heads=2, num_layers=1, dropout=0.0)
+    module.eval()
+
+    x = torch.randn(2, 3, 8)
+    # First row fully masked, second row partially valid
+    mask = torch.tensor([[False, False, False], [True, False, False]])
+
+    out = module(x, mask)
+
+    assert out.shape == (2, 3, 8)
+    assert not torch.isnan(out).any()
+    assert torch.allclose(out[0], torch.zeros_like(out[0]))
+
+
+def test_bag_classifier_output_shape():
+    clf = BagClassifier(in_dim=16, num_classes=2, hidden_dims=[8], dropout=0.0)
+    x = torch.randn(4, 16)
+    y = clf(x)
+    assert y.shape == (4, 2)
