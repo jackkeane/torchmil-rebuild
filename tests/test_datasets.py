@@ -1,6 +1,4 @@
 import csv
-import sys
-import types
 
 import pytest
 import torch
@@ -110,26 +108,27 @@ def test_processed_dataset_returns_valid_bags_for_all_items(tmp_path):
 
 
 def test_camelyon16_dataset_structure_and_split(tmp_path):
-    base = tmp_path / "camelyon16" / "UNI"
-    feats = base / "features"
+    np = pytest.importorskip("numpy")
+    base = tmp_path / "dataset" / "patches_512"
+    feats = base / "features" / "features_UNI"
     feats.mkdir(parents=True)
 
-    torch.save(torch.randn(4, 16), feats / "slide_1.pt")
-    torch.save(torch.randn(2, 16), feats / "slide_2.pt")
+    np.save(feats / "slide_1.npy", np.random.randn(4, 16).astype("float32"))
+    np.save(feats / "slide_2.npy", np.random.randn(2, 16).astype("float32"))
 
-    manifest = base / "manifest.csv"
+    manifest = base / "manifest_UNI.csv"
     _write_manifest(
         manifest,
         [
             {
-                "features_path": "features/slide_1.pt",
+                "features_path": "dataset/patches_512/features/features_UNI/slide_1.npy",
                 "label": "1",
                 "split": "train",
                 "adjacency_path": "",
                 "instance_labels_path": "",
             },
             {
-                "features_path": "features/slide_2.pt",
+                "features_path": "dataset/patches_512/features/features_UNI/slide_2.npy",
                 "label": "0",
                 "split": "test",
                 "adjacency_path": "",
@@ -223,14 +222,16 @@ def test_processed_dataset_npy_loading(tmp_path):
 
 
 def test_camelyon16_download_uses_base_root_not_dataset_root(tmp_path, monkeypatch):
-    base = tmp_path / "camelyon16" / "UNI"
-    feats = base / "features"
+    np = pytest.importorskip("numpy")
+    base = tmp_path / "dataset" / "patches_512"
+    feats = base / "features" / "features_UNI"
     feats.mkdir(parents=True)
-    torch.save(torch.randn(1, 2), feats / "s.pt")
+    np.save(feats / "s.npy", np.random.randn(1, 2).astype("float32"))
+
     _write_manifest(
-        base / "manifest.csv",
+        base / "manifest_UNI.csv",
         [{
-            "features_path": "features/s.pt",
+            "features_path": "dataset/patches_512/features/features_UNI/s.npy",
             "label": "1",
             "split": "train",
             "adjacency_path": "",
@@ -240,16 +241,23 @@ def test_camelyon16_download_uses_base_root_not_dataset_root(tmp_path, monkeypat
 
     ds = Camelyon16MIL(root=tmp_path, features="UNI", split="train", download=False)
 
-    called = {}
+    called = {"download": False}
 
-    def fake_snapshot_download(**kwargs):
-        called.update(kwargs)
-        return str(kwargs["local_dir"])
+    def fake_download_extract():
+        called["download"] = True
 
-    fake_hf = types.SimpleNamespace(snapshot_download=fake_snapshot_download)
-    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf)
+    def fake_build_manifest(root, features, patch_size):
+        called["root"] = root
+        called["features"] = features
+        called["patch_size"] = patch_size
+        return base / "manifest_UNI.csv"
+
+    monkeypatch.setattr(ds, "_download_and_extract", fake_download_extract)
+    import torchmil.datasets.camelyon16 as cam_module
+    monkeypatch.setattr(cam_module, "_build_manifest", fake_build_manifest)
 
     out = ds.download()
-    assert out == tmp_path / "camelyon16"
-    assert called["local_dir"] == tmp_path / "camelyon16"
-    assert called["allow_patterns"] == ["UNI/**"]
+    assert called["download"] is True
+    assert called["root"] == tmp_path
+    assert called["features"] == "UNI"
+    assert out == base / "manifest_UNI.csv"

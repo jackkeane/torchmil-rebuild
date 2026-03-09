@@ -36,7 +36,9 @@ class ProcessedMILDataset(Dataset):
         self.root = Path(root).expanduser().resolve()
 
         if samples is None:
-            manifest_path = self.root / manifest_file
+            # Accept absolute path OR relative-to-root path
+            _mf = Path(manifest_file)
+            manifest_path = _mf if _mf.is_absolute() else self.root / manifest_file
             if not manifest_path.exists():
                 raise FileNotFoundError(f"Manifest file not found: {manifest_path}")
             loaded_samples = self._load_manifest(manifest_path)
