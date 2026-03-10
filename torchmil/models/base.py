@@ -70,6 +70,6 @@ class MILModel(nn.Module):
         torch.save(self.state_dict(), Path(path))
 
     def load(self, path: str | Path, map_location: str | torch.device | None = None) -> "MILModel":
-        state = torch.load(Path(path), map_location=map_location)
+        state = torch.load(Path(path), map_location=map_location, weights_only=True)
         self.load_state_dict(state)
         return self

@@ -1,3 +1,5 @@
+__version__ = "0.1.0"
+
 from .data import make_bag, mil_collate_fn, validate_bag
 from .datasets import Camelyon16MIL, ProcessedMILDataset
 from .models import ABMIL, CLAM, DSMIL, DTFDMIL, MILModel, TransMIL
@@ -13,6 +15,7 @@ from .nn import (
 from .utils import Trainer, accuracy, auroc, f1, kfold_split_indices, performance
 
 __all__ = [
+    "__version__",
     "make_bag",
     "validate_bag",
     "mil_collate_fn",

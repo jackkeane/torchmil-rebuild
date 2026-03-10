@@ -111,7 +111,7 @@ class ProcessedMILDataset(Dataset):
         suffix = file_path.suffix.lower()
 
         if suffix in {".pt", ".pth"}:
-            loaded = torch.load(file_path, map_location="cpu")
+            loaded = torch.load(file_path, map_location="cpu", weights_only=True)
             if not isinstance(loaded, torch.Tensor):
                 raise TypeError(f"Expected tensor in {file_path}, got {type(loaded).__name__}")
             return loaded
@@ -127,7 +127,7 @@ class ProcessedMILDataset(Dataset):
 
     def _load_tensor(self, path: Path) -> torch.Tensor:
         tensor = self._cached_load(str(path))
-        if tensor.ndim != 2 and path == self._samples[0]["features_path"]:
+        if tensor.ndim != 2:
             raise ValueError(f"Expected a 2D feature tensor at {path}, got shape {tuple(tensor.shape)}")
         return tensor
 
@@ -145,12 +145,7 @@ class ProcessedMILDataset(Dataset):
 
     def __getitem__(self, index: int):
         sample = self._samples[index]
-        instances = self._cached_load(str(sample["features_path"]))
-        if instances.ndim != 2:
-            raise ValueError(
-                f"Expected features with shape [N_i, D], got {tuple(instances.shape)} "
-                f"for sample index {index}"
-            )
+        instances = self._load_tensor(sample["features_path"])
 
         adjacency = None
         if "adjacency_path" in sample:

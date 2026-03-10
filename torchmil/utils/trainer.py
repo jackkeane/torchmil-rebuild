@@ -10,52 +10,6 @@ from torch import Tensor, nn
 from .metrics import accuracy, auroc, f1, performance
 
 
-def kfold_split_indices(
-    n_samples: int,
-    n_splits: int = 5,
-    shuffle: bool = True,
-    seed: int = 42,
-) -> list[tuple[list[int], list[int]]]:
-    """Create K-fold train/validation index splits.
-
-    Args:
-        n_samples: Number of samples in the dataset.
-        n_splits: Number of folds.
-        shuffle: Whether to shuffle before splitting.
-        seed: Random seed when shuffling.
-
-    Returns:
-        List of ``(train_indices, val_indices)`` tuples.
-    """
-    if n_samples <= 0:
-        raise ValueError("n_samples must be > 0")
-    if n_splits < 2:
-        raise ValueError("n_splits must be >= 2")
-    if n_splits > n_samples:
-        raise ValueError("n_splits cannot be greater than n_samples")
-
-    indices = list(range(n_samples))
-    if shuffle:
-        g = torch.Generator().manual_seed(seed)
-        perm = torch.randperm(n_samples, generator=g).tolist()
-        indices = [indices[i] for i in perm]
-
-    fold_sizes = [n_samples // n_splits] * n_splits
-    for i in range(n_samples % n_splits):
-        fold_sizes[i] += 1
-
-    splits: list[tuple[list[int], list[int]]] = []
-    current = 0
-    for fold_size in fold_sizes:
-        start, end = current, current + fold_size
-        val_idx = indices[start:end]
-        train_idx = indices[:start] + indices[end:]
-        splits.append((train_idx, val_idx))
-        current = end
-
-    return splits
-
-
 class Trainer:
     """Utility class for model training and validation."""
 
@@ -119,7 +73,14 @@ class Trainer:
             "performance": performance(logits_cat, targets_cat),
         }
 
-    def train(self, dataloader, epochs: int, val_dataloader=None, patience: int | None = None) -> list[dict[str, float | int | bool]]:
+    def train(
+        self,
+        dataloader,
+        epochs: int,
+        val_dataloader=None,
+        patience: int | None = None,
+        verbose: bool = False,
+    ) -> list[dict[str, float | int | bool]]:
         if epochs <= 0:
             raise ValueError("epochs must be > 0")
         if patience is not None and patience < 0:
@@ -164,5 +125,20 @@ class Trainer:
                             break
 
             self.history.append(log)
+
+            if verbose:
+                msg = (
+                    f"[epoch {log['epoch']}] "
+                    f"train_loss={log['train_loss']:.4f} "
+                    f"train_perf={log['train_performance']:.4f}"
+                )
+                if val_dataloader is not None:
+                    msg += (
+                        f" val_loss={log['val_loss']:.4f} "
+                        f"val_perf={log['val_performance']:.4f}"
+                    )
+                if log.get("early_stopped", False):
+                    msg += " [early_stopped]"
+                print(msg)
 
         return self.history

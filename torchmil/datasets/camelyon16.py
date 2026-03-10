@@ -16,9 +16,11 @@ _PATCH_SIZE = "patches_512"
 
 
 def _extract_tar(tar_path: Path, dest: Path) -> None:
+    """Extract tar.gz safely with path traversal protection."""
     dest.mkdir(parents=True, exist_ok=True)
     with tarfile.open(tar_path, "r:gz") as t:
-        t.extractall(dest)
+        # Python 3.12+: use filter='data' to prevent path traversal (CVE-2007-4559)
+        t.extractall(dest, filter="data")
 
 
 def _build_manifest(root: Path, features: str, patch_size: str = _PATCH_SIZE) -> Path:
@@ -59,9 +61,12 @@ def _build_manifest(root: Path, features: str, patch_size: str = _PATCH_SIZE) ->
         lbl_path = labels_dir / f"{bag_name}.npy"
         if not feat_path.exists() or not lbl_path.exists():
             continue
-        label = int(np.load(str(lbl_path)).flat[0])
+
+        raw_label = np.load(str(lbl_path)).flat[0]
+        label = int(raw_label)
+
         rows.append({
-            "features_path": str(feat_path),
+            "features_path": str(feat_path.relative_to(root)),
             "label": str(label),
             "split": split,
             "adjacency_path": "",

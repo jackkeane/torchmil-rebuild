@@ -21,11 +21,13 @@ class CLAM(MILModel):
         num_classes: int = 2,
         hidden_dim: int = 256,
         top_k: int = 4,
+        aux_weight: float = 0.1,
         criterion: nn.Module | None = None,
     ) -> None:
         super().__init__(in_shape=in_shape, criterion=criterion)
         self.num_classes = num_classes
         self.top_k = top_k
+        self.aux_weight = float(aux_weight)
 
         self.embed = nn.Sequential(
             nn.Linear(self.in_dim, hidden_dim),
@@ -59,8 +61,8 @@ class CLAM(MILModel):
         attention, bag_repr = self.attention(embedded, attention_mask)
         bag_logits = self.classifier(bag_repr)
 
-        # Keep a lightweight instance branch for CLAM-style top/bottom evidence mining.
+        # Lightweight instance branch for CLAM-style top/bottom evidence mining.
         cluster_feat = self._instance_cluster_features(embedded, attention, attention_mask)
         aux_logits = self.instance_classifier(cluster_feat[:, : embedded.shape[-1]])
 
-        return bag_logits + 0.0 * aux_logits
+        return bag_logits + self.aux_weight * aux_logits
