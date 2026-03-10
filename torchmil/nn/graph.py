@@ -58,8 +58,10 @@ class GraphConv(nn.Module):
             eye = eye.unsqueeze(0).expand(batch_size, -1, -1)
             adj = adj + eye * valid_edges
 
-        degree = adj.sum(dim=-1, keepdim=True).clamp_min(1e-12)
-        norm_adj = adj / degree
+        # Symmetric normalization: D^{-1/2} A D^{-1/2}
+        degree = adj.sum(dim=-1).clamp_min(1e-12)
+        inv_sqrt_degree = degree.pow(-0.5)
+        norm_adj = inv_sqrt_degree.unsqueeze(-1) * adj * inv_sqrt_degree.unsqueeze(-2)
         neigh = torch.matmul(norm_adj, inst)
 
         out = self.lin_self(inst) + self.lin_neigh(neigh)

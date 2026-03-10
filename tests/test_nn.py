@@ -115,7 +115,10 @@ def test_graph_conv_respects_adjacency_message_passing():
     mask = torch.tensor([[True, True, True]])
 
     out = module(x, adj, mask)
-    expected = torch.tensor([[[3.0], [3.0], [3.0]]])
+    # With symmetric normalization D^{-1/2}AD^{-1/2},
+    # values become [3/sqrt(2), (1+5)/sqrt(2), 3/sqrt(2)].
+    s2 = 2.0 ** 0.5
+    expected = torch.tensor([[[3.0 / s2], [6.0 / s2], [3.0 / s2]]])
 
     assert torch.allclose(out, expected, atol=1e-6)
 

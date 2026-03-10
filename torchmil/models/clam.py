@@ -13,7 +13,16 @@ from .base import MILModel
 
 
 class CLAM(MILModel):
-    """Simplified CLAM with attention pooling and instance clustering branch."""
+    """Simplified CLAM with attention pooling and instance clustering branch.
+
+    Args:
+        in_shape: Input feature shape or feature dimension.
+        num_classes: Number of bag-level classes.
+        hidden_dim: Hidden projection size.
+        top_k: Number of top/bottom attended instances for clustering branch.
+        aux_weight: Weight for auxiliary instance branch logits.
+        criterion: Optional loss module (defaults to CrossEntropyLoss).
+    """
 
     def __init__(
         self,

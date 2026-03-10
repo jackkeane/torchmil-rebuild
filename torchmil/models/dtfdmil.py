@@ -13,7 +13,15 @@ from .base import MILModel
 
 
 class DTFDMIL(MILModel):
-    """Double-tier feature distillation MIL model."""
+    """Double-tier feature distillation MIL model.
+
+    Args:
+        in_shape: Input feature shape or feature dimension.
+        num_classes: Number of bag-level classes.
+        hidden_dim: Hidden projection size.
+        top_k: Number of top-attended instances for local distillation.
+        criterion: Optional loss module (defaults to CrossEntropyLoss).
+    """
 
     def __init__(
         self,

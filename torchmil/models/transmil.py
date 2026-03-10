@@ -13,7 +13,16 @@ from .base import MILModel
 
 
 class TransMIL(MILModel):
-    """Transformer MIL with a learnable CLS token."""
+    """Transformer MIL with a learnable CLS token.
+
+    Args:
+        in_shape: Input feature shape or feature dimension.
+        num_classes: Number of bag-level classes.
+        num_heads: Number of transformer attention heads.
+        num_layers: Number of transformer encoder layers.
+        dropout: Dropout probability in transformer blocks.
+        criterion: Optional loss module (defaults to CrossEntropyLoss).
+    """
 
     def __init__(
         self,

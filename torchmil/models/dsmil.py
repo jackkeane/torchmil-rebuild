@@ -13,7 +13,14 @@ from .base import MILModel
 
 
 class DSMIL(MILModel):
-    """Dual-stream MIL with max and attention-style critical instance pooling."""
+    """Dual-stream MIL with max and attention-style critical instance pooling.
+
+    Args:
+        in_shape: Input feature shape or feature dimension.
+        num_classes: Number of bag-level classes.
+        hidden_dim: Hidden projection size.
+        criterion: Optional loss module (defaults to CrossEntropyLoss).
+    """
 
     def __init__(
         self,

@@ -70,16 +70,18 @@ def _binary_auc(scores: Tensor, y_true: Tensor) -> float:
     sorted_true = y_true[order]
     n = scores.numel()
 
+    # Compute average ranks with vectorized tie handling.
     ranks = torch.arange(1, n + 1, dtype=torch.float32, device=scores.device)
-    tie_start = 0
-    while tie_start < n:
-        tie_end = tie_start + 1
-        while tie_end < n and sorted_scores[tie_end] == sorted_scores[tie_start]:
-            tie_end += 1
-        if tie_end - tie_start > 1:
-            avg_rank = ranks[tie_start:tie_end].mean()
-            ranks[tie_start:tie_end] = avg_rank
-        tie_start = tie_end
+    uniq_vals, counts = torch.unique_consecutive(sorted_scores, return_counts=True)
+    if uniq_vals.numel() != n:
+        starts = torch.cat([
+            torch.tensor([0], device=scores.device, dtype=torch.long),
+            torch.cumsum(counts[:-1], dim=0),
+        ])
+        ends = torch.cumsum(counts, dim=0)
+        for s, e in zip(starts.tolist(), ends.tolist(), strict=False):
+            if e - s > 1:
+                ranks[s:e] = ranks[s:e].mean()
 
     sum_pos_ranks = ranks[sorted_true == 1].sum().item()
     auc = (sum_pos_ranks - (n_pos * (n_pos + 1) / 2.0)) / (n_pos * n_neg)

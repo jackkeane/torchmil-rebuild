@@ -20,10 +20,10 @@ class Trainer:
         self.history: list[dict[str, float | int | bool]] = []
 
     def _move_batch_to_device(self, batch):
-        if hasattr(batch, "to"):
-            return batch.to(self.device)
         if isinstance(batch, Mapping):
             return {k: self._move_batch_to_device(v) for k, v in batch.items()}
+        if hasattr(batch, "to"):
+            return batch.to(self.device)
         if isinstance(batch, Tensor):
             return batch.to(self.device)
         return batch
