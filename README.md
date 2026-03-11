@@ -16,22 +16,22 @@ A clean-room rebuild of the `torchmil` ecosystem from the paper: **A PyTorch-bas
 ### 1) Environment
 
 ```bash
-cd ~/clawd/torchmil-rebuild
-~/anaconda3/bin/conda run -n py312 python -m pip install -e .
+cd torchmil-rebuild
+conda run -n py312 python -m pip install -e .
 ```
 
 ### 2) Run tests
 
 ```bash
-cd ~/clawd/torchmil-rebuild
-PYTHONPATH=. ~/anaconda3/bin/conda run -n py312 python -m pytest tests/ -v
+cd torchmil-rebuild
+conda run -n py312 python -m pytest tests/ -v
 ```
 
 ### 3) Run CAMELYON16 benchmark (UNI features)
 
 ```bash
-cd ~/clawd/torchmil-rebuild
-PYTHONPATH=. ~/anaconda3/bin/conda run -n py312 python scripts/run_camelyon16_benchmark.py \
+cd torchmil-rebuild
+conda run -n py312 python scripts/run_camelyon16_benchmark.py \
   --data-root ./data \
   --features UNI \
   --download \
